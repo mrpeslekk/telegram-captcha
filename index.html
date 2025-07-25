@@ -17,21 +17,6 @@
         
         <div id="hold-btn" class="hold-button">
             <span>Press and Hold</span>
-            
-            <!-- The SVG Wave code from your sample is now inside the button -->
-            <svg class="waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-            viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto">
-                <defs>
-                    <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
-                </defs>
-                <g class="parallax">
-                    <!-- The fill color is now using the CSS variable we defined -->
-                    <use xlink:href="#gentle-wave" x="48" y="0" fill="var(--wave-fill-color)" />
-                    <use xlink:href="#gentle-wave" x="48" y="3" fill="var(--wave-fill-color)" />
-                    <use xlink:href="#gentle-wave" x="48" y="5" fill="var(--wave-fill-color)" />
-                    <use xlink:href="#gentle-wave" x="48" y="7" fill="var(--wave-fill-color)" />
-                </g>
-            </svg>
         </div>
         
         <p id="message"></p>
@@ -66,7 +51,11 @@
                 holdBtn.style.pointerEvents = 'none';
 
                 try {
-                    await fetch(`${botUrl}/verify-success/${verificationToken}`);
+                    // This fetch call tells the bot to approve the user and send the message.
+                    const response = await fetch(`${botUrl}/verify-success/${verificationToken}`);
+                    if (!response.ok) throw new Error('Bot communication failed');
+                    
+                    // The bot will handle the rest. We just close the window.
                     setTimeout(() => tg.close(), 2000);
                 } catch (error) {
                     messageEl.textContent = 'Connection error.';
