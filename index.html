@@ -4,138 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>The Arch - Verification</title>
+    <!-- Link to the external stylesheet -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Telegram Web App script -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Zen+Dots&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400&display=swap');
-
-        :root {
-            --background-color: #000000;
-            --container-bg: #0F0C0C;
-            --button-bg: #222222;
-            --text-color: #ffffff;
-        }
-
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden; /* Prevents scrolling */
-        }
-
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            display: flex;
-            justify-content: center;
-            align-items: flex-start; /* Aligns content to the top */
-            padding-top: 5vh; /* Adds some space from the top edge */
-            text-align: center;
-        }
-
-        .main-container {
-            max-width: 380px;
-            width: 90%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .header-image {
-            /* The width has been changed to 250px as requested */
-            width: 300px; 
-            height: auto;
-            margin-bottom: 10px;
-        }
-
-        .title {
-            font-family: 'Zen Dots', sans-serif;
-            font-size: 2.5em;
-            letter-spacing: 2px;
-            margin: 0;
-        }
-
-        .description {
-            max-width: 300px;
-            font-size: 0.9em;
-            line-height: 1.4;
-            opacity: 0.8;
-        }
-
-        .description strong {
-            font-family: 'Zen Dots', sans-serif;
-        }
-
-        #captcha-image-container {
-            background-color: var(--button-bg);
-            padding: 10px;
-            border-radius: 12px;
-            margin-top: 5px;
-            height: 70px;
-            width: 200px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        #captcha-image {
-            max-width: 100%;
-            max-height: 100%;
-            border-radius: 8px;
-        }
-
-        .options-container {
-            background-color: var(--container-bg);
-            border-radius: 20px;
-            padding: 20px;
-            width: 100%;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .option-btn {
-            font-family: 'Zen Dots', sans-serif;
-            background-color: var(--button-bg);
-            color: var(--text-color);
-            border: none;
-            border-radius: 12px;
-            padding: 15px;
-            font-size: 1em;
-            cursor: pointer;
-        }
-        
-        .change-btn {
-            font-family: 'Zen Dots', sans-serif;
-            background-color: var(--button-bg);
-            color: var(--text-color);
-            border: none;
-            border-radius: 12px;
-            padding: 15px;
-            font-size: 1em;
-            cursor: pointer;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .change-btn img {
-            width: 20px;
-            height: 20px;
-        }
-        
-        #message {
-            margin-top: 10px;
-            font-weight: 500;
-            height: 20px;
-        }
-        .success { color: #28a745; }
-        .error { color: #dc3545; }
-    </style>
 </head>
 <body>
 
@@ -145,25 +17,17 @@
         <h1 class="title">THE ARCH</h1>
         <p class="description">Patch the human verification module below to establish a secure connection to <strong>The Arch</strong></p>
         
-        <div id="captcha-image-container">
-            <img id="captcha-image" src="" alt="Loading captcha...">
+        <!-- The single "Press and Hold" button -->
+        <div id="hold-btn" class="hold-button">
+            <span>Press and Hold</span>
         </div>
-        
-        <div id="options-container" class="options-container"></div>
-        
-        <button id="change-btn" class="change-btn">
-            <img src="https://i.postimg.cc/hQn478gg/icons8-refresh-512px-2.png" alt="Change Captcha">
-            <span>CHANGE</span>
-        </button>
         
         <p id="message"></p>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const captchaImage = document.getElementById('captcha-image');
-            const optionsContainer = document.getElementById('options-container');
-            const changeBtn = document.getElementById('change-btn');
+            const holdBtn = document.getElementById('hold-btn');
             const messageEl = document.getElementById('message');
 
             const tg = window.Telegram.WebApp;
@@ -176,58 +40,58 @@
 
             if (!verificationToken || !botUrl) {
                 messageEl.textContent = 'Error: Invalid link.';
+                holdBtn.style.display = 'none'; // Hide the button if the link is bad
                 return;
             }
-            
-            async function getNewCaptcha() {
+
+            let holdTimer = null;
+            const HOLD_DURATION = 5000; // 5 seconds in milliseconds
+
+            // Function to call when verification is successful
+            async function onVerificationSuccess() {
+                holdBtn.textContent = 'Verified!';
+                messageEl.textContent = 'Success! You passed.';
+                messageEl.className = 'success';
+                holdBtn.style.pointerEvents = 'none'; // Disable further clicks
+
                 try {
-                    const response = await fetch(`${botUrl}/get-captcha/${verificationToken}`);
-                    const data = await response.json();
-
-                    captchaImage.src = `${botUrl}/captcha-image/${verificationToken}?t=${new Date().getTime()}`;
-                    
-                    optionsContainer.innerHTML = '';
-                    data.options.forEach(option => {
-                        const button = document.createElement('button');
-                        button.textContent = option;
-                        button.className = 'option-btn';
-                        button.onclick = () => verify(option);
-                        optionsContainer.appendChild(button);
-                    });
-                    messageEl.textContent = '';
-                } catch (error) {
-                    messageEl.textContent = 'Failed to load captcha.';
-                    messageEl.className = 'error';
-                }
-            }
-
-            async function verify(selectedOption) {
-                messageEl.textContent = 'Verifying...';
-                try {
-                    const response = await fetch(`${botUrl}/verify-captcha/${verificationToken}/${selectedOption}`);
-                    const result = await response.json();
-
-                    if (result.status === 'success') {
-                        messageEl.textContent = 'Success! You passed.';
-                        messageEl.className = 'success';
-                        setTimeout(() => tg.close(), 2000);
-                    } else if (result.status === 'banned') {
-                        messageEl.textContent = 'Too many wrong attempts. You are banned.';
-                        messageEl.className = 'error';
-                        setTimeout(() => tg.close(), 2000);
-                    } else {
-                        messageEl.textContent = `Incorrect. ${result.attempts_left} attempts remaining.`;
-                        messageEl.className = 'error';
-                        getNewCaptcha();
-                    }
+                    // Notify the bot that the user passed.
+                    // NOTE: The bot.py needs an endpoint like /verify-success/{token}
+                    await fetch(`${botUrl}/verify-success/${verificationToken}`);
+                    // Close the web app after a short delay
+                    setTimeout(() => tg.close(), 2000);
                 } catch (error) {
                     messageEl.textContent = 'Connection error.';
                     messageEl.className = 'error';
                 }
             }
 
-            changeBtn.addEventListener('click', getNewCaptcha);
-            getNewCaptcha();
+            // Function to start the hold timer and animation
+            function startHold() {
+                if (holdTimer) return; // Prevent multiple timers
+                holdBtn.classList.add('is-holding');
+                holdTimer = setTimeout(onVerificationSuccess, HOLD_DURATION);
+            }
+
+            // Function to cancel the hold
+            function cancelHold() {
+                holdBtn.classList.remove('is-holding');
+                if (holdTimer) {
+                    clearTimeout(holdTimer);
+                    holdTimer = null;
+                }
+            }
+
+            // Event listeners for both mouse and touch
+            holdBtn.addEventListener('mousedown', startHold);
+            holdBtn.addEventListener('mouseup', cancelHold);
+            holdBtn.addEventListener('mouseleave', cancelHold);
+
+            holdBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startHold();
+            });
+            holdBtn.addEventListener('touchend', cancelHold);
         });
     </script>
 </body>
