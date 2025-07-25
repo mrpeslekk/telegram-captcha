@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Arch - Verification</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Telegram Web App script (not needed for preview) -->
+    <!-- <script src="https://telegram.org/js/telegram-web-app.js"></script> -->
     <style>
+        /* Import the Zen Dots font and a standard sans-serif font */
         @import url('https://fonts.googleapis.com/css2?family=Zen+Dots&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400&display=swap');
 
@@ -17,7 +19,7 @@
         }
 
         body {
-            font-family: 'Roboto', sans-serif;
+            font-family: 'Roboto', sans-serif; /* A readable font for the description */
             background-color: var(--background-color);
             color: var(--text-color);
             display: flex;
@@ -49,10 +51,13 @@
             font-family: 'Zen Dots', sans-serif;
             font-size: 3em;
             letter-spacing: 2px;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
         }
 
         .description {
             max-width: 300px;
+            font-size: 0.95em;
+            line-height: 1.5;
             opacity: 0.8;
         }
 
@@ -89,9 +94,9 @@
             padding: 15px;
             font-size: 1.1em;
             cursor: pointer;
-            transition: background-color 0.2s ease;
+            transition: background-color 0.2s ease, transform 0.1s ease;
         }
-
+        
         .change-btn {
             font-family: 'Zen Dots', sans-serif;
             background-color: var(--button-bg);
@@ -106,6 +111,12 @@
             justify-content: center;
             align-items: center;
             gap: 10px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .change-btn img {
+            width: 20px;
+            height: 20px;
         }
         
         #message {
@@ -113,22 +124,32 @@
             font-weight: 500;
             height: 20px;
         }
-        .success { color: #28a745; }
-        .error { color: #dc3545; }
     </style>
 </head>
 <body>
 
     <div class="main-container">
-        <img src="https://i.imgur.com/g8yP5xG.png" alt="The Arch Header" class="header-image">
+        <img src="https://i.postimg.cc/V59kPhBN/Chat-GPT-Image-Jul-24-2025-01-38-38-PM-1.png" alt="The Arch Header" class="header-image">
+
         <h1 class="title">THE ARCH</h1>
-        <p class="description">Patch the human verification module below to establish a secure connection to <strong>The Arch</strong></p>
-        <div id="captcha-display" class="captcha-display"></div>
-        <div id="options-container" class="options-container"></div>
+
+        <p class="description">
+            Patch the human verification module below to establish a secure connection to <strong>The Arch</strong>
+        </p>
+
+        <div id="captcha-display" class="captcha-display">
+            <!-- Captcha code will be displayed here -->
+        </div>
+
+        <div id="options-container" class="options-container">
+            <!-- Four option buttons will be generated here -->
+        </div>
+
         <button id="change-btn" class="change-btn">
-            <img src="https://i.imgur.com/6nCgB2D.png" alt="Change Captcha" style="width:20px; height:20px;">
+            <img src="https://i.postimg.cc/hQn478gg/icons8-refresh-512px-2.png" alt="Change Captcha">
             <span>CHANGE</span>
         </button>
+        
         <p id="message"></p>
     </div>
 
@@ -139,82 +160,59 @@
             const changeBtn = document.getElementById('change-btn');
             const messageEl = document.getElementById('message');
 
-            let correctAnswer = '';
+            // --- THIS SECURITY CHECK IS DISABLED FOR PREVIEW ---
+            /*
             const tg = window.Telegram.WebApp;
             tg.ready();
             tg.expand();
-
             const urlParams = new URLSearchParams(window.location.search);
             const verificationToken = urlParams.get('token');
             const botUrl = urlParams.get('bot_url');
-
             if (!verificationToken || !botUrl) {
                 messageEl.textContent = 'Error: Verification info missing.';
+                changeBtn.disabled = true;
                 return;
             }
+            */
+            // ---------------------------------------------------
             
             function generateRandomString(length) {
                 const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
                 let result = '';
-                for (let i = 0; i < length; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+                for (let i = 0; i < length; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
                 return result;
             }
 
             function generateCaptcha() {
-                correctAnswer = generateRandomString(6);
+                let correctAnswer = generateRandomString(6);
                 let options = [correctAnswer];
                 while (options.length < 4) {
                     let wrongOption = generateRandomString(6);
-                    if (!options.includes(wrongOption)) options.push(wrongOption);
+                    if (!options.includes(wrongOption)) {
+                        options.push(wrongOption);
+                    }
                 }
                 options.sort(() => Math.random() - 0.5);
+
                 captchaDisplay.textContent = correctAnswer;
+                
                 optionsContainer.innerHTML = '';
                 options.forEach(option => {
                     const button = document.createElement('button');
                     button.textContent = option;
                     button.className = 'option-btn';
-                    button.addEventListener('click', () => verify(option));
+                    // In preview mode, clicking just shows an alert
+                    button.addEventListener('click', () => alert(`You clicked ${option}`));
                     optionsContainer.appendChild(button);
                 });
+                
                 messageEl.textContent = '';
             }
 
-            async function verify(selectedOption) {
-                // Disable buttons to prevent multiple clicks
-                optionsContainer.querySelectorAll('button').forEach(b => b.disabled = true);
-                changeBtn.disabled = true;
-
-                try {
-                    const response = await fetch(`${botUrl}/verify-captcha/${verificationToken}/${selectedOption}`);
-                    const result = await response.json();
-
-                    if (result.status === 'success') {
-                        messageEl.textContent = 'Success! You passed.';
-                        messageEl.className = 'success';
-                        setTimeout(() => tg.close(), 2000);
-                    } else if (result.status === 'banned') {
-                        messageEl.textContent = 'Too many wrong attempts. You are banned.';
-                        messageEl.className = 'error';
-                        setTimeout(() => tg.close(), 2000);
-                    } else { // status === 'failed'
-                        messageEl.textContent = `Incorrect. ${result.attempts_left} attempts remaining.`;
-                        messageEl.className = 'error';
-                        // Re-enable buttons for another try
-                        optionsContainer.querySelectorAll('button').forEach(b => b.disabled = false);
-                        changeBtn.disabled = false;
-                        generateCaptcha();
-                    }
-                } catch (error) {
-                    messageEl.textContent = 'Connection error. Please try again.';
-                    messageEl.className = 'error';
-                    optionsContainer.querySelectorAll('button').forEach(b => b.disabled = false);
-                    changeBtn.disabled = false;
-                }
-            }
-
             changeBtn.addEventListener('click', generateCaptcha);
-            generateCaptcha();
+            generateCaptcha(); // This will now run and create the buttons
         });
     </script>
 </body>
