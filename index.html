@@ -25,28 +25,54 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const holdBtn = document.getElementById('hold-btn');
+            const holdBtnText = holdBtn.querySelector('span');
             const messageEl = document.getElementById('message');
 
             const tg = window.Telegram.WebApp;
             tg.ready();
             tg.expand();
 
+            const urlParams = new URLSearchParams(window.location.search);
+            const chatId = urlParams.get('chat_id');
+
+            if (!chatId) {
+                messageEl.textContent = 'Error: Invalid or expired link.';
+                holdBtn.style.display = 'none';
+                return;
+            }
+
             let holdTimer = null;
             const HOLD_DURATION = 5000; // 5 seconds
 
             function onVerificationSuccess() {
-                // This is the new, reliable method.
-                // It sends data to the bot and INSTANTLY closes the window.
-                tg.sendData("verified");
+                // --- THIS IS THE CRITICAL FIX ---
+                // 1. Give the user immediate visual feedback that the hold was successful.
+                holdBtnText.textContent = 'Verified!';
+                messageEl.textContent = 'Success! Closing window...';
+                messageEl.className = 'success';
+                holdBtn.style.pointerEvents = 'none'; // Disable the button
+
+                // 2. Prepare the data to send back to the bot.
+                const dataToSend = JSON.stringify({
+                    status: "verified",
+                    chat_id: chatId
+                });
+
+                // 3. Send the data. Telegram will close the window automatically.
+                tg.sendData(dataToSend);
             }
 
             function startHold() {
                 if (holdTimer) return;
+                // Give immediate feedback that the hold has started.
+                holdBtnText.textContent = 'Holding...';
                 holdBtn.classList.add('is-holding');
                 holdTimer = setTimeout(onVerificationSuccess, HOLD_DURATION);
             }
 
             function cancelHold() {
+                // Reset the button text if the hold is released early.
+                holdBtnText.textContent = 'Press and Hold';
                 holdBtn.classList.remove('is-holding');
                 if (holdTimer) {
                     clearTimeout(holdTimer);
