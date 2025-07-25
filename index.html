@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Arch - Verification</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Zen+Dots&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400&display=swap');
+
+        :root {
+            --background-color: #000000;
+            --container-bg: #0F0C0C;
+            --button-bg: #222222;
+            --text-color: #ffffff;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .main-container {
+            max-width: 380px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .header-image {
+            width: 180px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            font-family: 'Zen Dots', sans-serif;
+            font-size: 3em;
+            letter-spacing: 2px;
+        }
+
+        .description {
+            max-width: 300px;
+            opacity: 0.8;
+        }
+
+        .description strong {
+            font-family: 'Zen Dots', sans-serif;
+        }
+
+        .captcha-display {
+            font-family: 'Zen Dots', sans-serif;
+            background-color: var(--button-bg);
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1.8em;
+            letter-spacing: 1.5px;
+            margin-top: 10px;
+        }
+
+        .options-container {
+            background-color: var(--container-bg);
+            border-radius: 20px;
+            padding: 20px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .option-btn {
+            font-family: 'Zen Dots', sans-serif;
+            background-color: var(--button-bg);
+            color: var(--text-color);
+            border: none;
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .change-btn {
+            font-family: 'Zen Dots', sans-serif;
+            background-color: var(--button-bg);
+            color: var(--text-color);
+            border: none;
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 1.1em;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        #message {
+            margin-top: 15px;
+            font-weight: 500;
+            height: 20px;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <img src="https://i.imgur.com/g8yP5xG.png" alt="The Arch Header" class="header-image">
+        <h1 class="title">THE ARCH</h1>
+        <p class="description">Patch the human verification module below to establish a secure connection to <strong>The Arch</strong></p>
+        <div id="captcha-display" class="captcha-display"></div>
+        <div id="options-container" class="options-container"></div>
+        <button id="change-btn" class="change-btn">
+            <img src="https://i.imgur.com/6nCgB2D.png" alt="Change Captcha" style="width:20px; height:20px;">
+            <span>CHANGE</span>
+        </button>
+        <p id="message"></p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const captchaDisplay = document.getElementById('captcha-display');
+            const optionsContainer = document.getElementById('options-container');
+            const changeBtn = document.getElementById('change-btn');
+            const messageEl = document.getElementById('message');
+
+            let correctAnswer = '';
+            const tg = window.Telegram.WebApp;
+            tg.ready();
+            tg.expand();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const verificationToken = urlParams.get('token');
+            const botUrl = urlParams.get('bot_url');
+
+            if (!verificationToken || !botUrl) {
+                messageEl.textContent = 'Error: Verification info missing.';
+                return;
+            }
+            
+            function generateRandomString(length) {
+                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                let result = '';
+                for (let i = 0; i < length; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+                return result;
+            }
+
+            function generateCaptcha() {
+                correctAnswer = generateRandomString(6);
+                let options = [correctAnswer];
+                while (options.length < 4) {
+                    let wrongOption = generateRandomString(6);
+                    if (!options.includes(wrongOption)) options.push(wrongOption);
+                }
+                options.sort(() => Math.random() - 0.5);
+                captchaDisplay.textContent = correctAnswer;
+                optionsContainer.innerHTML = '';
+                options.forEach(option => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.className = 'option-btn';
+                    button.addEventListener('click', () => verify(option));
+                    optionsContainer.appendChild(button);
+                });
+                messageEl.textContent = '';
+            }
+
+            async function verify(selectedOption) {
+                // Disable buttons to prevent multiple clicks
+                optionsContainer.querySelectorAll('button').forEach(b => b.disabled = true);
+                changeBtn.disabled = true;
+
+                try {
+                    const response = await fetch(`${botUrl}/verify-captcha/${verificationToken}/${selectedOption}`);
+                    const result = await response.json();
+
+                    if (result.status === 'success') {
+                        messageEl.textContent = 'Success! You passed.';
+                        messageEl.className = 'success';
+                        setTimeout(() => tg.close(), 2000);
+                    } else if (result.status === 'banned') {
+                        messageEl.textContent = 'Too many wrong attempts. You are banned.';
+                        messageEl.className = 'error';
+                        setTimeout(() => tg.close(), 2000);
+                    } else { // status === 'failed'
+                        messageEl.textContent = `Incorrect. ${result.attempts_left} attempts remaining.`;
+                        messageEl.className = 'error';
+                        // Re-enable buttons for another try
+                        optionsContainer.querySelectorAll('button').forEach(b => b.disabled = false);
+                        changeBtn.disabled = false;
+                        generateCaptcha();
+                    }
+                } catch (error) {
+                    messageEl.textContent = 'Connection error. Please try again.';
+                    messageEl.className = 'error';
+                    optionsContainer.querySelectorAll('button').forEach(b => b.disabled = false);
+                    changeBtn.disabled = false;
+                }
+            }
+
+            changeBtn.addEventListener('click', generateCaptcha);
+            generateCaptcha();
+        });
+    </script>
+</body>
+</html>
