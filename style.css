@@ -3,18 +3,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400&display=swap');
 
 :root {
-    /* Define the color palette from your design */
     --background-color: #0F0C0C;
     --button-bg: #000000;
-    --wave-color: rgba(34, 34, 34, 0.6); /* #222222 with 60% transparency */
     --text-color: #ffffff;
+    /* The wave color is now defined here */
+    --wave-fill-color: rgba(34, 34, 34, 0.4);
 }
 
 html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    overflow: hidden; /* Prevents scrolling */
+    overflow: hidden;
 }
 
 body {
@@ -77,34 +77,65 @@ body {
     margin-top: 20px;
     margin-bottom: 20px;
     width: 80%;
-    z-index: 1; /* Ensure button text is above the wave */
+    z-index: 1;
 }
 
-/* --- Wave Animation --- */
-.wave {
+.hold-button span {
+    position: relative;
+    z-index: 2; /* Keep text above the wave */
+}
+
+/* --- SVG Wave Animation --- */
+.waves {
     position: absolute;
-    width: 200%;
-    height: 200%;
-    background-color: var(--wave-color);
-    top: 100%; /* Start below the button */
-    left: -50%;
-    border-radius: 45%;
-    transform-origin: 50% 50%;
-    animation: wave-animation 5s linear forwards; /* Play animation over 5s */
-    z-index: -1; /* Place wave behind the button text */
+    left: 0;
+    width: 100%;
+    height: 150px; /* Height of the wave SVG */
+    /* Start the wave completely below the button */
+    top: 100%; 
+    transition: top 5s linear; /* Animate the 'top' property over 5 seconds */
+    z-index: 1;
 }
 
-.hold-button.is-holding .wave {
-    display: block; /* Show the wave when holding */
+/* When holding, move the wave up to fill the button */
+.hold-button.is-holding .waves {
+    top: 0;
 }
 
-@keyframes wave-animation {
+/* The animation for the horizontal movement of the waves */
+.parallax > use {
+    animation: move-forever 25s cubic-bezier(.55,.5,.45,.5) infinite;
+}
+.parallax > use:nth-child(1) {
+    animation-delay: -2s;
+    animation-duration: 7s;
+}
+.parallax > use:nth-child(2) {
+    animation-delay: -3s;
+    animation-duration: 10s;
+}
+.parallax > use:nth-child(3) {
+    animation-delay: -4s;
+    animation-duration: 13s;
+}
+.parallax > use:nth-child(4) {
+    animation-delay: -5s;
+    animation-duration: 20s;
+}
+@keyframes move-forever {
     0% {
-        transform: rotate(0deg);
-        top: 100%;
+        transform: translate3d(-90px,0,0);
     }
-    100% {
-        transform: rotate(360deg);
-        top: -50%; /* Move wave up to cover the button */
+    100% { 
+        transform: translate3d(85px,0,0);
     }
 }
+
+#message {
+    margin-top: 10px;
+    font-weight: 500;
+    height: 20px;
+}
+
+.success { color: #28a745; }
+.error { color: #dc3545; }
