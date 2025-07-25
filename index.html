@@ -31,36 +31,13 @@
             tg.ready();
             tg.expand();
 
-            const urlParams = new URLSearchParams(window.location.search);
-            const verificationToken = urlParams.get('token');
-            const botUrl = urlParams.get('bot_url');
-
-            if (!verificationToken || !botUrl) {
-                messageEl.textContent = 'Error: Invalid link.';
-                holdBtn.style.display = 'none';
-                return;
-            }
-
             let holdTimer = null;
-            const HOLD_DURATION = 5000;
+            const HOLD_DURATION = 5000; // 5 seconds
 
-            async function onVerificationSuccess() {
-                holdBtn.querySelector('span').textContent = 'Verified!';
-                messageEl.textContent = 'Success! You passed.';
-                messageEl.className = 'success';
-                holdBtn.style.pointerEvents = 'none';
-
-                try {
-                    // This fetch call tells the bot to approve the user and send the message.
-                    const response = await fetch(`${botUrl}/verify-success/${verificationToken}`);
-                    if (!response.ok) throw new Error('Bot communication failed');
-                    
-                    // The bot will handle the rest. We just close the window.
-                    setTimeout(() => tg.close(), 2000);
-                } catch (error) {
-                    messageEl.textContent = 'Connection error.';
-                    messageEl.className = 'error';
-                }
+            function onVerificationSuccess() {
+                // This is the new, reliable method.
+                // It sends data to the bot and INSTANTLY closes the window.
+                tg.sendData("verified");
             }
 
             function startHold() {
@@ -77,6 +54,7 @@
                 }
             }
 
+            // Event listeners for both mouse and touch
             holdBtn.addEventListener('mousedown', startHold);
             holdBtn.addEventListener('mouseup', cancelHold);
             holdBtn.addEventListener('mouseleave', cancelHold);
