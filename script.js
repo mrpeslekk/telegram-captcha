@@ -20,16 +20,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const HOLD_DURATION = 5000; // 5 seconds
 
     function onVerificationSuccess() {
+        // --- THIS IS THE CRITICAL FIX ---
+        // 1. Clear the timer immediately. This prevents the 'cancelHold' function
+        //    from running when you release the button after success.
+        clearTimeout(holdTimer);
+        holdTimer = null;
+
+        // 2. Give the user immediate visual feedback.
         holdBtnText.textContent = 'Verified!';
         messageEl.textContent = 'Success! Closing window...';
         messageEl.className = 'success';
-        holdBtn.style.pointerEvents = 'none';
+        holdBtn.style.pointerEvents = 'none'; // Disable the button
 
+        // 3. Prepare the data to send back to the bot.
         const dataToSend = JSON.stringify({
             status: "verified",
             chat_id: chatId
         });
         
+        // 4. Send the data. Telegram will close the window automatically.
         tg.sendData(dataToSend);
     }
 
@@ -43,6 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function cancelHold() {
         holdBtnText.textContent = 'Press and Hold';
         holdBtn.classList.remove('is-holding');
+        // This check is now crucial. If the timer has been cleared by the
+        // success function, this code will not run.
         if (holdTimer) {
             clearTimeout(holdTimer);
             holdTimer = null;
