@@ -1,0 +1,107 @@
+/* Import the required fonts from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Zen+Dots&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400&display=swap');
+
+:root {
+    /* Define the color palette from your design */
+    --background-color: #0F0C0C;
+    --button-bg: #000000;
+    --fill-color: rgba(34, 34, 34, 0.4); /* #222222 with 40% transparency */
+    --text-color: #ffffff;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Prevents scrolling */
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 5vh;
+    text-align: center;
+}
+
+.main-container {
+    max-width: 380px;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px;
+}
+
+.header-image {
+    width: 250px; 
+    height: auto;
+    margin-bottom: 10px;
+}
+
+.title {
+    font-family: 'Zen Dots', sans-serif;
+    font-size: 2.5em;
+    letter-spacing: 2px;
+    margin: 0;
+}
+
+.description {
+    max-width: 300px;
+    font-size: 0.9em;
+    line-height: 1.4;
+    opacity: 0.8;
+}
+
+.description strong {
+    font-family: 'Zen Dots', sans-serif;
+}
+
+/* Styles for the new "Press and Hold" button */
+.hold-button {
+    font-family: 'Zen Dots', sans-serif;
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    border: 1px solid #222222; /* Subtle border */
+    border-radius: 999px; /* Creates the pill shape */
+    padding: 20px 40px;
+    font-size: 1.2em;
+    cursor: pointer;
+    position: relative; /* Needed for the fill animation */
+    overflow: hidden; /* Keeps the fill inside the button */
+    -webkit-user-select: none; /* Prevents text selection on hold */
+    -ms-user-select: none;
+    user-select: none;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* This is the element that creates the fill effect */
+.hold-button::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 0; /* Starts with 0 height */
+    background-color: var(--fill-color);
+    transition: height 5s linear; /* The 5-second animation */
+}
+
+/* This class is added by JavaScript when the user holds the button */
+.hold-button.is-holding::before {
+    height: 100%; /* Animate height to 100% to fill the button */
+}
+
+#message {
+    margin-top: 10px;
+    font-weight: 500;
+    height: 20px;
+}
+
+.success { color: #28a745; }
+.error { color: #dc3545; }
