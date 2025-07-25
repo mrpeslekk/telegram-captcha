@@ -17,9 +17,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let holdTimer = null;
+    let isVerified = false; // This flag will prevent the freeze.
     const HOLD_DURATION = 5000; // 5 seconds
 
     function onVerificationSuccess() {
+        if (isVerified) return; // Prevent this from running more than once
+        isVerified = true; // Set the flag to true
+
         clearTimeout(holdTimer);
         holdTimer = null;
 
@@ -37,13 +41,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startHold() {
-        if (holdTimer) return;
+        if (holdTimer || isVerified) return;
         holdBtnText.textContent = 'Holding...';
         holdBtn.classList.add('is-holding');
         holdTimer = setTimeout(onVerificationSuccess, HOLD_DURATION);
     }
 
     function cancelHold() {
+        // If we are already verified, do nothing. This is the fix.
+        if (isVerified) return;
+
         holdBtnText.textContent = 'Press and Hold';
         holdBtn.classList.remove('is-holding');
         if (holdTimer) {
