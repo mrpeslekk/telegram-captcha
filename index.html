@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>The Arch - Verification</title>
-    <!-- Link to the external stylesheet -->
     <link rel="stylesheet" href="style.css">
-    <!-- Telegram Web App script -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -17,9 +15,10 @@
         <h1 class="title">THE ARCH</h1>
         <p class="description">Patch the human verification module below to establish a secure connection to <strong>The Arch</strong></p>
         
-        <!-- The single "Press and Hold" button -->
         <div id="hold-btn" class="hold-button">
             <span>Press and Hold</span>
+            <!-- This div will be used for the wave animation -->
+            <div class="wave" style="display: none;"></div>
         </div>
         
         <p id="message"></p>
@@ -28,6 +27,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const holdBtn = document.getElementById('hold-btn');
+            const wave = holdBtn.querySelector('.wave');
             const messageEl = document.getElementById('message');
 
             const tg = window.Telegram.WebApp;
@@ -40,25 +40,24 @@
 
             if (!verificationToken || !botUrl) {
                 messageEl.textContent = 'Error: Invalid link.';
-                holdBtn.style.display = 'none'; // Hide the button if the link is bad
+                holdBtn.style.display = 'none';
                 return;
             }
 
             let holdTimer = null;
-            const HOLD_DURATION = 5000; // 5 seconds in milliseconds
+            const HOLD_DURATION = 5000;
 
-            // Function to call when verification is successful
             async function onVerificationSuccess() {
                 holdBtn.textContent = 'Verified!';
                 messageEl.textContent = 'Success! You passed.';
                 messageEl.className = 'success';
-                holdBtn.style.pointerEvents = 'none'; // Disable further clicks
+                holdBtn.style.pointerEvents = 'none';
 
                 try {
-                    // Notify the bot that the user passed.
-                    // NOTE: The bot.py needs an endpoint like /verify-success/{token}
+                    // This fetch call tells the bot to approve the user
                     await fetch(`${botUrl}/verify-success/${verificationToken}`);
-                    // Close the web app after a short delay
+                    // The bot will now send the success message and approve the request.
+                    // The window will close automatically after 2 seconds.
                     setTimeout(() => tg.close(), 2000);
                 } catch (error) {
                     messageEl.textContent = 'Connection error.';
@@ -66,15 +65,15 @@
                 }
             }
 
-            // Function to start the hold timer and animation
             function startHold() {
-                if (holdTimer) return; // Prevent multiple timers
+                if (holdTimer) return;
+                wave.style.display = 'block'; // Make the wave visible
                 holdBtn.classList.add('is-holding');
                 holdTimer = setTimeout(onVerificationSuccess, HOLD_DURATION);
             }
 
-            // Function to cancel the hold
             function cancelHold() {
+                wave.style.display = 'none'; // Hide the wave
                 holdBtn.classList.remove('is-holding');
                 if (holdTimer) {
                     clearTimeout(holdTimer);
@@ -82,15 +81,10 @@
                 }
             }
 
-            // Event listeners for both mouse and touch
             holdBtn.addEventListener('mousedown', startHold);
             holdBtn.addEventListener('mouseup', cancelHold);
             holdBtn.addEventListener('mouseleave', cancelHold);
-
-            holdBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                startHold();
-            });
+            holdBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startHold(); });
             holdBtn.addEventListener('touchend', cancelHold);
         });
     </script>
