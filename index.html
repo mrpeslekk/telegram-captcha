@@ -17,8 +17,21 @@
         
         <div id="hold-btn" class="hold-button">
             <span>Press and Hold</span>
-            <!-- This div will be used for the wave animation -->
-            <div class="wave" style="display: none;"></div>
+            
+            <!-- The SVG Wave code from your sample is now inside the button -->
+            <svg class="waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+            viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto">
+                <defs>
+                    <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
+                </defs>
+                <g class="parallax">
+                    <!-- The fill color is now using the CSS variable we defined -->
+                    <use xlink:href="#gentle-wave" x="48" y="0" fill="var(--wave-fill-color)" />
+                    <use xlink:href="#gentle-wave" x="48" y="3" fill="var(--wave-fill-color)" />
+                    <use xlink:href="#gentle-wave" x="48" y="5" fill="var(--wave-fill-color)" />
+                    <use xlink:href="#gentle-wave" x="48" y="7" fill="var(--wave-fill-color)" />
+                </g>
+            </svg>
         </div>
         
         <p id="message"></p>
@@ -27,7 +40,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const holdBtn = document.getElementById('hold-btn');
-            const wave = holdBtn.querySelector('.wave');
             const messageEl = document.getElementById('message');
 
             const tg = window.Telegram.WebApp;
@@ -48,16 +60,13 @@
             const HOLD_DURATION = 5000;
 
             async function onVerificationSuccess() {
-                holdBtn.textContent = 'Verified!';
+                holdBtn.querySelector('span').textContent = 'Verified!';
                 messageEl.textContent = 'Success! You passed.';
                 messageEl.className = 'success';
                 holdBtn.style.pointerEvents = 'none';
 
                 try {
-                    // This fetch call tells the bot to approve the user
                     await fetch(`${botUrl}/verify-success/${verificationToken}`);
-                    // The bot will now send the success message and approve the request.
-                    // The window will close automatically after 2 seconds.
                     setTimeout(() => tg.close(), 2000);
                 } catch (error) {
                     messageEl.textContent = 'Connection error.';
@@ -67,13 +76,11 @@
 
             function startHold() {
                 if (holdTimer) return;
-                wave.style.display = 'block'; // Make the wave visible
                 holdBtn.classList.add('is-holding');
                 holdTimer = setTimeout(onVerificationSuccess, HOLD_DURATION);
             }
 
             function cancelHold() {
-                wave.style.display = 'none'; // Hide the wave
                 holdBtn.classList.remove('is-holding');
                 if (holdTimer) {
                     clearTimeout(holdTimer);
