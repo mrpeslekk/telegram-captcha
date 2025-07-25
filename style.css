@@ -6,7 +6,7 @@
     /* Define the color palette from your design */
     --background-color: #0F0C0C;
     --button-bg: #000000;
-    --fill-color: rgba(34, 34, 34, 0.4); /* #222222 with 40% transparency */
+    --wave-color: rgba(34, 34, 34, 0.6); /* #222222 with 60% transparency */
     --text-color: #ffffff;
 }
 
@@ -24,7 +24,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    padding-top: 10vh; /* Pushes content down from the top */
+    padding-top: 10vh;
     text-align: center;
 }
 
@@ -34,7 +34,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 25px; /* Space between elements */
+    gap: 25px;
 }
 
 .header-image {
@@ -61,48 +61,50 @@ body {
     font-family: 'Zen Dots', sans-serif;
 }
 
-/* Styles for the "Press and Hold" button */
 .hold-button {
     font-family: 'Zen Dots', sans-serif;
     background-color: var(--button-bg);
     color: var(--text-color);
-    border: 1px solid #222222; /* Subtle border */
-    border-radius: 999px; /* Creates the pill shape */
+    border: 1px solid #222222;
+    border-radius: 999px;
     padding: 20px 40px;
     font-size: 1.2em;
     cursor: pointer;
-    position: relative; /* Needed for the fill animation */
-    overflow: hidden; /* Keeps the fill inside the button */
-    -webkit-user-select: none; /* Prevents text selection on hold */
-    -ms-user-select: none;
+    position: relative;
+    overflow: hidden;
+    -webkit-user-select: none;
     user-select: none;
     margin-top: 20px;
     margin-bottom: 20px;
-    width: 80%; /* Makes the button wide */
+    width: 80%;
+    z-index: 1; /* Ensure button text is above the wave */
 }
 
-/* This is the element that creates the fill effect */
-.hold-button::before {
-    content: '';
+/* --- Wave Animation --- */
+.wave {
     position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 0; /* Starts with 0 height */
-    background-color: var(--fill-color);
-    transition: height 5s linear; /* The 5-second animation */
+    width: 200%;
+    height: 200%;
+    background-color: var(--wave-color);
+    top: 100%; /* Start below the button */
+    left: -50%;
+    border-radius: 45%;
+    transform-origin: 50% 50%;
+    animation: wave-animation 5s linear forwards; /* Play animation over 5s */
+    z-index: -1; /* Place wave behind the button text */
 }
 
-/* This class is added by JavaScript when the user holds the button */
-.hold-button.is-holding::before {
-    height: 100%; /* Animate height to 100% to fill the button */
+.hold-button.is-holding .wave {
+    display: block; /* Show the wave when holding */
 }
 
-#message {
-    margin-top: 10px;
-    font-weight: 500;
-    height: 20px;
+@keyframes wave-animation {
+    0% {
+        transform: rotate(0deg);
+        top: 100%;
+    }
+    100% {
+        transform: rotate(360deg);
+        top: -50%; /* Move wave up to cover the button */
+    }
 }
-
-.success { color: #28a745; }
-.error { color: #dc3545; }
