@@ -28,25 +28,31 @@ document.addEventListener('DOMContentLoaded', () => {
         holdTimer = null;
 
         holdBtnText.textContent = 'Verified!';
-        messageEl.textContent = 'Success! Processing...';
+        holdBtn.style.pointerEvents = 'none'; // Disable the button
+
+        // --- THIS IS THE NEW COUNTDOWN LOGIC ---
+        let countdown = 3;
+        messageEl.textContent = `Success! Closing in ${countdown}...`;
         messageEl.className = 'success';
-        holdBtn.style.pointerEvents = 'none';
 
-        // --- THIS IS THE CRITICAL FIX ---
-        // 1. Prepare the data to send to the bot.
-        const dataToSend = JSON.stringify({
-            status: "verified",
-            chat_id: chatId
-        });
-        
-        // 2. Send the data to the bot so it can approve the request.
-        tg.sendData(dataToSend);
+        const countdownInterval = setInterval(() => {
+            countdown--;
+            if (countdown > 0) {
+                messageEl.textContent = `Success! Closing in ${countdown}...`;
+            } else {
+                // When countdown is over, stop the timer and send data
+                messageEl.textContent = 'Success! Closing now...';
+                clearInterval(countdownInterval);
 
-        // 3. Immediately close the window after a tiny delay,
-        //    just like in the code you provided. This guarantees it closes.
-        setTimeout(() => {
-            tg.close();
-        }, 100); // 100ms delay
+                const dataToSend = JSON.stringify({
+                    status: "verified",
+                    chat_id: chatId
+                });
+                
+                // This command sends the data to your bot and closes the window
+                tg.sendData(dataToSend);
+            }
+        }, 1000);
     }
 
     function startHold() {
