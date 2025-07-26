@@ -27,25 +27,37 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(holdTimer);
         holdTimer = null;
 
+        // --- THIS IS THE NEW, CORRECT LOGIC ---
+        // 1. Immediately show "Verified!" and disable the button.
         holdBtnText.textContent = 'Verified!';
-        messageEl.textContent = 'Success! Processing...';
-        messageEl.className = 'success';
         holdBtn.style.pointerEvents = 'none';
+        messageEl.className = 'success';
 
-        // --- This is the logic from the working version ---
-        // 1. Prepare the data to send to the bot.
-        const dataToSend = JSON.stringify({
-            status: "verified",
-            chat_id: chatId
-        });
-        
-        // 2. Send the data to the bot so it can approve the request.
-        tg.sendData(dataToSend);
-
-        // 3. Immediately close the window after a tiny delay.
+        // 2. Wait for 1 second before starting the countdown.
         setTimeout(() => {
-            tg.close();
-        }, 100); // 100ms delay
+            let countdown = 3;
+            messageEl.textContent = `Success! Closing in ${countdown}...`;
+
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    messageEl.textContent = `Success! Closing in ${countdown}...`;
+                } else {
+                    // 3. When countdown finishes, stop the timer.
+                    clearInterval(countdownInterval);
+                    messageEl.textContent = 'Success! Closing now...';
+
+                    // 4. Prepare and send the data to the bot.
+                    const dataToSend = JSON.stringify({
+                        status: "verified",
+                        chat_id: chatId
+                    });
+                    
+                    // 5. This command sends the data and closes the window.
+                    tg.sendData(dataToSend);
+                }
+            }, 1000); // Run every second
+        }, 1000); // 1-second delay
     }
 
     function startHold() {
@@ -66,9 +78,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    holdBtn.addEventListener('mousedown', startHold);
-    holdBtn.addEventListener('mouseup', cancelHold);
-    holdBtn.addEventListener('mouseleave', cancelHold);
-    holdBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startHold(); });
-    holdBtn.addEventListener('touchend', cancelHold);
+    function addListeners() {
+        holdBtn.addEventListener('mousedown', startHold);
+        holdBtn.addEventListener('mouseup', cancelHold);
+        holdBtn.addEventListener('mouseleave', cancelHold);
+        holdBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startHold(); });
+        holdBtn.addEventListener('touchend', cancelHold);
+    }
+    
+    addListeners();
 });
