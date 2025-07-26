@@ -17,37 +17,47 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let holdTimer = null;
+    let isVerified = false;
     const HOLD_DURATION = 5000; // 5 seconds
 
     function onVerificationSuccess() {
-        // --- THIS IS THE CRITICAL FIX ---
-        // 1. Immediately disable any further interaction.
-        removeListeners();
+        if (isVerified) return;
+        isVerified = true;
 
-        // 2. Give the user immediate visual feedback.
+        clearTimeout(holdTimer);
+        holdTimer = null;
+
         holdBtnText.textContent = 'Verified!';
-        messageEl.textContent = 'Success! Closing window...';
+        messageEl.textContent = 'Success! Processing...';
         messageEl.className = 'success';
-        holdBtn.style.pointerEvents = 'none'; // Disable the button
+        holdBtn.style.pointerEvents = 'none';
 
-        // 3. Prepare the data to send back to the bot.
+        // --- This is the logic from the working version ---
+        // 1. Prepare the data to send to the bot.
         const dataToSend = JSON.stringify({
             status: "verified",
             chat_id: chatId
         });
         
-        // 4. Send the data. Telegram will close the window automatically.
+        // 2. Send the data to the bot so it can approve the request.
         tg.sendData(dataToSend);
+
+        // 3. Immediately close the window after a tiny delay.
+        setTimeout(() => {
+            tg.close();
+        }, 100); // 100ms delay
     }
 
     function startHold() {
-        if (holdTimer) return;
+        if (holdTimer || isVerified) return;
         holdBtnText.textContent = 'Holding...';
         holdBtn.classList.add('is-holding');
         holdTimer = setTimeout(onVerificationSuccess, HOLD_DURATION);
     }
 
     function cancelHold() {
+        if (isVerified) return;
+
         holdBtnText.textContent = 'Press and Hold';
         holdBtn.classList.remove('is-holding');
         if (holdTimer) {
@@ -56,25 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // A function to add all event listeners
-    function addListeners() {
-        holdBtn.addEventListener('mousedown', startHold);
-        holdBtn.addEventListener('mouseup', cancelHold);
-        holdBtn.addEventListener('mouseleave', cancelHold);
-        holdBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startHold(); });
-        holdBtn.addEventListener('touchend', cancelHold);
-    }
-
-    // A function to remove all event listeners to prevent race conditions
-    function removeListeners() {
-        holdBtn.removeEventListener('mousedown', startHold);
-        holdBtn.removeEventListener('mouseup', cancelHold);
-        holdBtn.removeEventListener('mouseleave', cancelHold);
-        // The touchend listener needs to be specifically removed this way
-        holdBtn.removeEventListener('touchstart', startHold);
-        holdBtn.removeEventListener('touchend', cancelHold);
-    }
-
-    // Start by adding the listeners
-    addListeners();
+    holdBtn.addEventListener('mousedown', startHold);
+    holdBtn.addEventListener('mouseup', cancelHold);
+    holdBtn.addEventListener('mouseleave', cancelHold);
+    holdBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startHold(); });
+    holdBtn.addEventListener('touchend', cancelHold);
 });
