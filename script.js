@@ -21,8 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function onVerificationSuccess() {
         // --- THIS IS THE CRITICAL FIX ---
-        // 1. Remove all event listeners immediately to prevent the 'cancelHold'
-        //    function from interfering after success.
+        // 1. Immediately disable any further interaction.
         removeListeners();
 
         // 2. Give the user immediate visual feedback.
@@ -66,11 +65,12 @@ document.addEventListener('DOMContentLoaded', () => {
         holdBtn.addEventListener('touchend', cancelHold);
     }
 
-    // A function to remove all event listeners
+    // A function to remove all event listeners to prevent race conditions
     function removeListeners() {
         holdBtn.removeEventListener('mousedown', startHold);
         holdBtn.removeEventListener('mouseup', cancelHold);
         holdBtn.removeEventListener('mouseleave', cancelHold);
+        // The touchend listener needs to be specifically removed this way
         holdBtn.removeEventListener('touchstart', startHold);
         holdBtn.removeEventListener('touchend', cancelHold);
     }
