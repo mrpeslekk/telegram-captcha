@@ -17,54 +17,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let holdTimer = null;
-    let isVerified = false;
     const HOLD_DURATION = 5000; // 5 seconds
 
     function onVerificationSuccess() {
-        if (isVerified) return;
-        isVerified = true;
+        // --- THIS IS THE CRITICAL FIX ---
+        // 1. Remove all event listeners immediately to prevent the 'cancelHold'
+        //    function from interfering after success.
+        removeListeners();
 
-        clearTimeout(holdTimer);
-        holdTimer = null;
-
+        // 2. Give the user immediate visual feedback.
         holdBtnText.textContent = 'Verified!';
+        messageEl.textContent = 'Success! Closing window...';
+        messageEl.className = 'success';
         holdBtn.style.pointerEvents = 'none'; // Disable the button
 
-        // --- THIS IS THE NEW COUNTDOWN LOGIC ---
-        let countdown = 3;
-        messageEl.textContent = `Success! Closing in ${countdown}...`;
-        messageEl.className = 'success';
-
-        const countdownInterval = setInterval(() => {
-            countdown--;
-            if (countdown > 0) {
-                messageEl.textContent = `Success! Closing in ${countdown}...`;
-            } else {
-                // When countdown is over, stop the timer and send data
-                messageEl.textContent = 'Success! Closing now...';
-                clearInterval(countdownInterval);
-
-                const dataToSend = JSON.stringify({
-                    status: "verified",
-                    chat_id: chatId
-                });
-                
-                // This command sends the data to your bot and closes the window
-                tg.sendData(dataToSend);
-            }
-        }, 1000);
+        // 3. Prepare the data to send back to the bot.
+        const dataToSend = JSON.stringify({
+            status: "verified",
+            chat_id: chatId
+        });
+        
+        // 4. Send the data. Telegram will close the window automatically.
+        tg.sendData(dataToSend);
     }
 
     function startHold() {
-        if (holdTimer || isVerified) return;
+        if (holdTimer) return;
         holdBtnText.textContent = 'Holding...';
         holdBtn.classList.add('is-holding');
         holdTimer = setTimeout(onVerificationSuccess, HOLD_DURATION);
     }
 
     function cancelHold() {
-        if (isVerified) return;
-
         holdBtnText.textContent = 'Press and Hold';
         holdBtn.classList.remove('is-holding');
         if (holdTimer) {
@@ -73,9 +57,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    holdBtn.addEventListener('mousedown', startHold);
-    holdBtn.addEventListener('mouseup', cancelHold);
-    holdBtn.addEventListener('mouseleave', cancelHold);
-    holdBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startHold(); });
-    holdBtn.addEventListener('touchend', cancelHold);
+    // A function to add all event listeners
+    function addListeners() {
+        holdBtn.addEventListener('mousedown', startHold);
+        holdBtn.addEventListener('mouseup', cancelHold);
+        holdBtn.addEventListener('mouseleave', cancelHold);
+        holdBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startHold(); });
+        holdBtn.addEventListener('touchend', cancelHold);
+    }
+
+    // A function to remove all event listeners
+    function removeListeners() {
+        holdBtn.removeEventListener('mousedown', startHold);
+        holdBtn.removeEventListener('mouseup', cancelHold);
+        holdBtn.removeEventListener('mouseleave', cancelHold);
+        holdBtn.removeEventListener('touchstart', startHold);
+        holdBtn.removeEventListener('touchend', cancelHold);
+    }
+
+    // Start by adding the listeners
+    addListeners();
 });
