@@ -17,27 +17,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let holdTimer = null;
-    let isVerified = false; // This flag will prevent the freeze.
+    let isVerified = false;
     const HOLD_DURATION = 5000; // 5 seconds
 
     function onVerificationSuccess() {
-        if (isVerified) return; // Prevent this from running more than once
-        isVerified = true; // Set the flag to true
+        if (isVerified) return;
+        isVerified = true;
 
         clearTimeout(holdTimer);
         holdTimer = null;
 
         holdBtnText.textContent = 'Verified!';
-        messageEl.textContent = 'Success! Closing window...';
+        messageEl.textContent = 'Success! Processing...';
         messageEl.className = 'success';
         holdBtn.style.pointerEvents = 'none';
 
+        // --- THIS IS THE CRITICAL FIX ---
+        // 1. Prepare the data to send to the bot.
         const dataToSend = JSON.stringify({
             status: "verified",
             chat_id: chatId
         });
         
+        // 2. Send the data to the bot so it can approve the request.
         tg.sendData(dataToSend);
+
+        // 3. Immediately close the window after a tiny delay,
+        //    just like in the code you provided. This guarantees it closes.
+        setTimeout(() => {
+            tg.close();
+        }, 100); // 100ms delay
     }
 
     function startHold() {
@@ -48,7 +57,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function cancelHold() {
-        // If we are already verified, do nothing. This is the fix.
         if (isVerified) return;
 
         holdBtnText.textContent = 'Press and Hold';
