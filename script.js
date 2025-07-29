@@ -20,6 +20,37 @@ document.addEventListener('DOMContentLoaded', () => {
     let isVerified = false;
     const HOLD_DURATION = 5000; // 5 seconds
 
+    // This is a new, separate function to handle the countdown.
+    function startCountdown() {
+        let countdown = 3;
+        
+        // The countdown text will now appear in the main button for clarity.
+        holdBtnText.textContent = `Closing in ${countdown}...`;
+
+        const countdownInterval = setInterval(() => {
+            countdown--;
+            if (countdown > 0) {
+                holdBtnText.textContent = `Closing in ${countdown}...`;
+            } else {
+                // When the countdown is over:
+                clearInterval(countdownInterval);
+                holdBtnText.textContent = 'Closing...';
+
+                // Prepare and send the data to the bot.
+                const dataToSend = JSON.stringify({
+                    status: "verified",
+                    chat_id: chatId
+                });
+                tg.sendData(dataToSend);
+                
+                // Force close the window after a very short delay.
+                setTimeout(() => {
+                    tg.close();
+                }, 100);
+            }
+        }, 1000);
+    }
+
     function onVerificationSuccess() {
         if (isVerified) return;
         isVerified = true;
@@ -27,40 +58,14 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(holdTimer);
         holdTimer = null;
 
+        // 1. Immediately show "Verified!" and disable the button.
         holdBtnText.textContent = 'Verified!';
         holdBtn.style.pointerEvents = 'none';
         messageEl.textContent = 'Success!';
         messageEl.className = 'success';
 
-        setTimeout(() => {
-            let countdown = 3;
-            messageEl.textContent = `Closing in ${countdown}...`;
-
-            const countdownInterval = setInterval(() => {
-                countdown--;
-                if (countdown > 0) {
-                    messageEl.textContent = `Closing in ${countdown}...`;
-                } else {
-                    clearInterval(countdownInterval);
-                    messageEl.textContent = 'Closing...';
-
-                    const dataToSend = JSON.stringify({
-                        status: "verified",
-                        chat_id: chatId
-                    });
-                    
-                    // 1. Send the data to the bot.
-                    tg.sendData(dataToSend);
-                    
-                    // --- THIS IS THE CRITICAL FIX ---
-                    // 2. Force the window to close after a short delay,
-                    //    just like in the working example you sent.
-                    setTimeout(() => {
-                        tg.close();
-                    }, 100); // 100ms delay to ensure data sends
-                }
-            }, 1000);
-        }, 1000);
+        // 2. After a 1-second delay, call the new countdown function.
+        setTimeout(startCountdown, 1000);
     }
 
     function startHold() {
@@ -72,7 +77,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function cancelHold() {
         if (isVerified) return;
-
         holdBtnText.textContent = 'Press and Hold';
         holdBtn.classList.remove('is-holding');
         if (holdTimer) {
