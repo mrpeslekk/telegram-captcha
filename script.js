@@ -27,17 +27,13 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(holdTimer);
         holdTimer = null;
 
-        // --- THIS IS THE CORRECTED LOGIC ---
-        // 1. Immediately show "Verified!" in the button and disable it.
         holdBtnText.textContent = 'Verified!';
         holdBtn.style.pointerEvents = 'none';
-        messageEl.textContent = 'Success!'; // Show initial success message at the bottom.
+        messageEl.textContent = 'Success!';
         messageEl.className = 'success';
 
-        // 2. Wait for 1 second before starting the countdown.
         setTimeout(() => {
             let countdown = 3;
-            // The countdown now appears in the message area at the bottom.
             messageEl.textContent = `Closing in ${countdown}...`;
 
             const countdownInterval = setInterval(() => {
@@ -45,21 +41,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (countdown > 0) {
                     messageEl.textContent = `Closing in ${countdown}...`;
                 } else {
-                    // 3. When countdown finishes, stop the timer.
                     clearInterval(countdownInterval);
                     messageEl.textContent = 'Closing...';
 
-                    // 4. Prepare and send the data to the bot.
                     const dataToSend = JSON.stringify({
                         status: "verified",
                         chat_id: chatId
                     });
                     
-                    // 5. This command sends the data and closes the window.
+                    // 1. Send the data to the bot.
                     tg.sendData(dataToSend);
+                    
+                    // --- THIS IS THE CRITICAL FIX ---
+                    // 2. Force the window to close after a short delay,
+                    //    just like in the working example you sent.
+                    setTimeout(() => {
+                        tg.close();
+                    }, 100); // 100ms delay to ensure data sends
                 }
-            }, 1000); // Run every second
-        }, 1000); // 1-second delay
+            }, 1000);
+        }, 1000);
     }
 
     function startHold() {
