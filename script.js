@@ -31,21 +31,23 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. Immediately show "Verified!" and disable the button.
         holdBtnText.textContent = 'Verified!';
         holdBtn.style.pointerEvents = 'none';
+        messageEl.textContent = 'Success!';
         messageEl.className = 'success';
 
         // 2. Wait for 1 second before starting the countdown.
         setTimeout(() => {
             let countdown = 3;
-            messageEl.textContent = `Success! Closing in ${countdown}...`;
+            // The countdown now appears inside the main button
+            holdBtnText.textContent = `Closing in ${countdown}...`;
 
             const countdownInterval = setInterval(() => {
                 countdown--;
                 if (countdown > 0) {
-                    messageEl.textContent = `Success! Closing in ${countdown}...`;
+                    holdBtnText.textContent = `Closing in ${countdown}...`;
                 } else {
                     // 3. When countdown finishes, stop the timer.
                     clearInterval(countdownInterval);
-                    messageEl.textContent = 'Success! Closing now...';
+                    holdBtnText.textContent = 'Closing...';
 
                     // 4. Prepare and send the data to the bot.
                     const dataToSend = JSON.stringify({
