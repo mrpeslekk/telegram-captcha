@@ -35,11 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(holdTimer);
         holdTimer = null;
 
-        // --- THE BULLETPROOF FLOW ---
+        // --- THE RELIABLE REDIRECT FLOW ---
 
         // 1. Give immediate visual feedback and disable the button
         holdBtnText.textContent = 'Verified!';
-        messageEl.textContent = 'Confirmation sent successfully.';
+        messageEl.textContent = 'Redirecting you to the group...';
         messageEl.className = 'success';
         holdBtn.style.pointerEvents = 'none';
         holdBtn.classList.remove('is-holding');
@@ -52,11 +52,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         tg.sendData(dataToSend);
 
-        // 3. Update the UI to instruct the user on the next step.
+        // 3. Redirect the browser to the invite link after a short delay.
         setTimeout(() => {
-            holdBtnText.textContent = 'Success!';
-            messageEl.textContent = 'Please check your private messages with the bot to get the link to join.';
-        }, 1000);
+            window.location.href = inviteLink;
+        }, 750); // 0.75-second delay
     }
 
     function startHold() {
