@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tg.sendData(dataToSend);
 
         // 3. Start a 3-second countdown which acts as a reliable delay before closing.
-        let countdown = 3;
+        let countdown = 5;
         holdBtnText.textContent = `Closing in ${countdown}...`;
 
         const countdownInterval = setInterval(() => {
