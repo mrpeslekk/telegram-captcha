@@ -12,10 +12,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const chatId = urlParams.get('chat_id');
     const userId = urlParams.get('user_id');
+    const inviteLink = urlParams.get('invite_link');
 
-    // Validate that we have the necessary parameters
-    if (!chatId || !userId) {
-        messageEl.textContent = 'Error: Invalid or expired link. (Code: 3)';
+    // Validate that we have ALL the necessary parameters
+    if (!chatId || !userId || !inviteLink) {
+        messageEl.textContent = 'Error: Invalid or expired link. (Code: 2)';
         messageEl.className = 'error';
         holdBtn.style.display = 'none';
         return;
@@ -52,7 +53,6 @@ document.addEventListener('DOMContentLoaded', () => {
         tg.sendData(dataToSend);
 
         // 3. Update the UI to instruct the user on the next step.
-        // We DO NOT redirect or close the window. This is the most reliable method.
         setTimeout(() => {
             holdBtnText.textContent = 'Success!';
             messageEl.textContent = 'Please check your private messages with the bot to get the link to join.';
