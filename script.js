@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatId = urlParams.get('chat_id');
     const userId = urlParams.get('user_id');
 
+    // Note: invite_link is no longer needed here.
     if (!chatId || !userId) {
         messageEl.textContent = 'Error: Invalid or expired link. (Code: 3)';
         messageEl.className = 'error';
@@ -25,22 +26,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const HOLD_DURATION = 5000; // 5 seconds
 
     function onVerificationSuccess() {
+        // Prevent this from running more than once
         if (isVerified) return;
         isVerified = true;
 
         clearTimeout(holdTimer);
         holdTimer = null;
 
-        // --- THE DEFINITIVE AUTO-CLOSE FLOW ---
+        // --- THE DEFINITIVE, RELIABLE FLOW ---
 
-        // 1. Give immediate visual feedback and disable the button.
+        // 1. Give immediate visual feedback and disable the button
         holdBtnText.textContent = 'Verified!';
-        messageEl.textContent = 'Confirmation sent. This window will now close.';
+        messageEl.textContent = 'Confirmation sent successfully.';
         messageEl.className = 'success';
         holdBtn.style.pointerEvents = 'none';
         holdBtn.classList.remove('is-holding');
 
-        // 2. CRITICAL: Send the data to the bot BEFORE starting the closing countdown.
+        // 2. Send the data to the bot.
         const dataToSend = JSON.stringify({
             status: "verified",
             chat_id: chatId,
@@ -48,19 +50,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         tg.sendData(dataToSend);
 
-        // 3. Start a 3-second countdown which acts as a reliable delay before closing.
-        let countdown = 3;
-        holdBtnText.textContent = `Closing in ${countdown}...`;
-
-        const countdownInterval = setInterval(() => {
-            countdown--;
-            if (countdown > 0) {
-                holdBtnText.textContent = `Closing in ${countdown}...`;
-            } else {
-                // When the countdown is over, clear the interval and close the window.
-                clearInterval(countdownInterval);
-                tg.close();
-            }
+        // 3. Update the UI to instruct the user on the next step.
+        // We DO NOT redirect or close the window. This is the most reliable method.
+        setTimeout(() => {
+            holdBtnText.textContent = 'Success!';
+            messageEl.textContent = 'Please check your private messages with the bot to get the link to join.';
         }, 1000);
     }
 
