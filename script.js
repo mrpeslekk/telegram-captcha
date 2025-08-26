@@ -12,12 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const chatId = urlParams.get('chat_id');
     const userId = urlParams.get('user_id');
-    // --- NEW: Get the invite link from the URL ---
-    const inviteLink = urlParams.get('invite_link');
 
-    // Validate that we have ALL the necessary parameters
-    if (!chatId || !userId || !inviteLink) {
-        messageEl.textContent = 'Error: Invalid or expired link. (Code: 2)';
+    // Validate that we have the necessary parameters
+    if (!chatId || !userId) {
+        messageEl.textContent = 'Error: Invalid or expired link. (Code: 3)';
         messageEl.className = 'error';
         holdBtn.style.display = 'none';
         return;
@@ -36,11 +34,11 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(holdTimer);
         holdTimer = null;
 
-        // --- THE RELIABLE REDIRECT FLOW ---
+        // --- THE BULLETPROOF FLOW ---
 
         // 1. Give immediate visual feedback and disable the button
         holdBtnText.textContent = 'Verified!';
-        messageEl.textContent = 'Redirecting you to the group...';
+        messageEl.textContent = 'Confirmation sent successfully.';
         messageEl.className = 'success';
         holdBtn.style.pointerEvents = 'none';
         holdBtn.classList.remove('is-holding');
@@ -53,11 +51,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         tg.sendData(dataToSend);
 
-        // 3. CRITICAL STEP: Redirect the browser to the invite link.
-        // We use a short timeout to ensure sendData has a moment to fire.
+        // 3. Update the UI to instruct the user on the next step.
+        // We DO NOT redirect or close the window. This is the most reliable method.
         setTimeout(() => {
-            window.location.href = inviteLink;
-        }, 750); // 0.75-second delay
+            holdBtnText.textContent = 'Success!';
+            messageEl.textContent = 'Please check your private messages with the bot to get the link to join.';
+        }, 1000);
     }
 
     function startHold() {
