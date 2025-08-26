@@ -12,10 +12,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const chatId = urlParams.get('chat_id');
     const userId = urlParams.get('user_id');
+    // --- NEW: Get the invite link from the URL ---
+    const inviteLink = urlParams.get('invite_link');
 
-    // Validate that we have the necessary parameters
-    if (!chatId || !userId) {
-        messageEl.textContent = 'Error: Invalid or expired link. (Code: 1)';
+    // Validate that we have ALL the necessary parameters
+    if (!chatId || !userId || !inviteLink) {
+        messageEl.textContent = 'Error: Invalid or expired link. (Code: 2)';
         messageEl.className = 'error';
         holdBtn.style.display = 'none';
         return;
@@ -34,16 +36,16 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(holdTimer);
         holdTimer = null;
 
-        // --- THE DEFINITIVE AUTO-CLOSE FLOW WITH COUNTDOWN ---
+        // --- THE RELIABLE REDIRECT FLOW ---
 
         // 1. Give immediate visual feedback and disable the button
         holdBtnText.textContent = 'Verified!';
-        messageEl.textContent = 'Confirmation sent. You are being redirected...';
+        messageEl.textContent = 'Redirecting you to the group...';
         messageEl.className = 'success';
         holdBtn.style.pointerEvents = 'none';
         holdBtn.classList.remove('is-holding');
 
-        // 2. CRITICAL STEP: Send the data to the bot BEFORE starting the countdown.
+        // 2. Send the data to the bot.
         const dataToSend = JSON.stringify({
             status: "verified",
             chat_id: chatId,
@@ -51,20 +53,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         tg.sendData(dataToSend);
 
-        // 3. Start a 3-second countdown which acts as a reliable delay.
-        let countdown = 3;
-        holdBtnText.textContent = `Closing in ${countdown}...`;
-
-        const countdownInterval = setInterval(() => {
-            countdown--;
-            if (countdown > 0) {
-                holdBtnText.textContent = `Closing in ${countdown}...`;
-            } else {
-                // When the countdown is over, clear the interval and close the window.
-                clearInterval(countdownInterval);
-                tg.close();
-            }
-        }, 1000);
+        // 3. CRITICAL STEP: Redirect the browser to the invite link.
+        // We use a short timeout to ensure sendData has a moment to fire.
+        setTimeout(() => {
+            window.location.href = inviteLink;
+        }, 750); // 0.75-second delay
     }
 
     function startHold() {
