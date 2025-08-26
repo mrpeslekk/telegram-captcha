@@ -34,33 +34,37 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(holdTimer);
         holdTimer = null;
 
-        // --- THIS IS THE NEW, RELIABLE FLOW ---
+        // --- THE DEFINITIVE AUTO-CLOSE FLOW WITH COUNTDOWN ---
 
-        // 1. Give immediate visual feedback
+        // 1. Give immediate visual feedback and disable the button
         holdBtnText.textContent = 'Verified!';
-        messageEl.textContent = 'Sending confirmation...';
+        messageEl.textContent = 'Confirmation sent. You are being redirected...';
         messageEl.className = 'success';
-        
-        // 2. Disable the button to prevent multiple clicks
         holdBtn.style.pointerEvents = 'none';
-        holdBtn.classList.remove('is-holding'); // Ensure visual state is reset
+        holdBtn.classList.remove('is-holding');
 
-        // 3. Prepare the data payload
+        // 2. CRITICAL STEP: Send the data to the bot BEFORE starting the countdown.
         const dataToSend = JSON.stringify({
             status: "verified",
             chat_id: chatId,
             user_id: userId
         });
-
-        // 4. Send the data to the bot. This is the most critical step.
         tg.sendData(dataToSend);
 
-        // 5. Update the UI to inform the user what to do next.
-        // We DO NOT close the window automatically anymore.
-        setTimeout(() => {
-             holdBtnText.textContent = 'Success!';
-             messageEl.textContent = 'Check your private messages with the bot to join the group.';
-        }, 1000); // Short delay for better UX
+        // 3. Start a 3-second countdown which acts as a reliable delay.
+        let countdown = 3;
+        holdBtnText.textContent = `Closing in ${countdown}...`;
+
+        const countdownInterval = setInterval(() => {
+            countdown--;
+            if (countdown > 0) {
+                holdBtnText.textContent = `Closing in ${countdown}...`;
+            } else {
+                // When the countdown is over, clear the interval and close the window.
+                clearInterval(countdownInterval);
+                tg.close();
+            }
+        }, 1000);
     }
 
     function startHold() {
