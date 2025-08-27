@@ -1,100 +1,90 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const holdBtn = document.getElementById('hold-btn');
-    const holdBtnText = holdBtn.querySelector('span');
-    const messageEl = document.getElementById('message');
-
-    const tg = window.Telegram && window.Telegram.WebApp;
-    if (!tg) {
-        messageEl.textContent = 'Telegram Web App API not found. Open this link from Telegram.';
-        messageEl.className = 'error';
-        holdBtn.style.display = 'none';
-        return;
+    // Ensure the Telegram Web App is ready before executing any code
+    if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.ready();
     }
 
-    tg.ready();
-    try { tg.expand(); } catch (e) { /* ignore */ }
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get('user_id');
-
-    if (!userId) {
-        messageEl.textContent = 'Error: Invalid or expired link.';
-        messageEl.className = 'error';
-        holdBtn.style.display = 'none';
-        return;
-    }
-
-    let holdTimer = null;
+    const holdButton = document.getElementById('hold-btn');
+    const messageElement = document.getElementById('message');
+    
+    let holdTimeout = null;
+    const holdDuration = 5000; // 5 seconds
     let isVerified = false;
-    const HOLD_DURATION = 5000;
 
-    function sendVerification() {
-        // Call the FastAPI /verify endpoint
-        fetch('https://d3db200ac461.ngrok-free.app', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId })
-        })
-        .then(res => res.json())
-        .then(data => {
-            console.log('Verification response:', data);
-        })
-        .catch(err => console.error('Verification error:', err));
-    }
+    // --- Event Handlers ---
 
-    function onVerificationSuccess() {
+    const startHold = (event) => {
+        // Prevent default actions like text selection or context menu
+        event.preventDefault();
+        
+        // Do nothing if already verified
+        if (isVerified) return;
+
+        // Add class to start the CSS animation and set the timer
+        holdButton.classList.add('is-holding');
+        messageElement.textContent = 'Keep holding...';
+        messageElement.className = 'message-area';
+
+        // Set a timeout to trigger verification success
+        holdTimeout = setTimeout(verificationSuccess, holdDuration);
+    };
+
+    const cancelHold = () => {
+        // Do nothing if already verified
+        if (isVerified) return;
+
+        // Clear the timer and reset the button's visual state
+        clearTimeout(holdTimeout);
+        holdButton.classList.remove('is-holding');
+        
+        // Provide feedback if the user released too early
+        if (messageElement.textContent === 'Keep holding...') {
+            messageElement.textContent = 'Released too soon. Try again.';
+            messageElement.className = 'message-area error';
+        }
+    };
+
+    const verificationSuccess = () => {
         if (isVerified) return;
         isVerified = true;
 
-        clearTimeout(holdTimer);
-        holdTimer = null;
+        // Provide success feedback to the user
+        messageElement.textContent = '✅ Verified!';
+        messageElement.className = 'message-area success';
+        holdButton.setAttribute('disabled', 'true'); // Disable the button
+        holdButton.querySelector('span').textContent = 'Completed';
 
-        holdBtnText.textContent = 'Verified!';
-        messageEl.textContent = 'Closing shortly...';
-        messageEl.className = 'success';
-        holdBtn.style.pointerEvents = 'none';
-        holdBtn.classList.remove('is-holding');
+        // Send data to the Telegram bot
+        try {
+            const dataToSend = JSON.stringify({ status: 'verified' });
+            window.Telegram.WebApp.sendData(dataToSend);
+            
+            // Close the web app after a short delay
+            setTimeout(() => {
+                window.Telegram.WebApp.close();
+            }, 1500);
 
-        sendVerification(); // 🔹 trigger bot approval
-
-        let countdown = 5;
-        holdBtnText.textContent = `Closing in ${countdown}...`;
-        const interval = setInterval(() => {
-            countdown--;
-            if (countdown > 0) {
-                holdBtnText.textContent = `Closing in ${countdown}...`;
-            } else {
-                clearInterval(interval);
-                try { tg.close(); } catch (e) { console.error(e); }
-            }
-        }, 1000);
-    }
-
-    function startHold() {
-        if (holdTimer || isVerified) return;
-        holdBtnText.textContent = 'Holding...';
-        holdBtn.classList.add('is-holding');
-        holdTimer = setTimeout(onVerificationSuccess, HOLD_DURATION);
-    }
-
-    function cancelHold() {
-        if (isVerified) return;
-        holdBtnText.textContent = 'Press and Hold';
-        holdBtn.classList.remove('is-holding');
-        if (holdTimer) {
-            clearTimeout(holdTimer);
-            holdTimer = null;
+        } catch (error) {
+            console.error('Error sending data to Telegram:', error);
+            messageElement.textContent = 'Error sending data. Please try again.';
+            messageElement.className = 'message-area error';
+            isVerified = false; // Allow retry
+            holdButton.removeAttribute('disabled');
         }
-    }
+    };
 
-    holdBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); startHold(); });
-    holdBtn.addEventListener('pointerup', (e) => { e.preventDefault(); cancelHold(); });
-    holdBtn.addEventListener('pointerleave', cancelHold);
+    // --- Attach Event Listeners ---
 
-    holdBtn.addEventListener('keydown', (e) => {
-        if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); startHold(); }
-    });
-    holdBtn.addEventListener('keyup', (e) => {
-        if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); cancelHold(); }
-    });
+    // For mouse users
+    holdButton.addEventListener('mousedown', startHold);
+    holdButton.addEventListener('mouseup', cancelHold);
+    holdButton.addEventListener('mouseleave', cancelHold); // Cancel if mouse leaves the button
+
+    // For touch screen users
+    holdButton.addEventListener('touchstart', startHold, { passive: false });
+    holdButton.addEventListener('touchend', cancelHold);
+    holdButton.addEventListener('touchcancel', cancelHold);
+
+    // Prevent context menu on long press (mobile)
+    holdButton.addEventListener('contextmenu', (e) => e.preventDefault());
 });
