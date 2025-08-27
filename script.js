@@ -1,4 +1,3 @@
-// script.js — Verified after countdown with handshake
 document.addEventListener('DOMContentLoaded', () => {
     const holdBtn = document.getElementById('hold-btn');
     const holdBtnText = holdBtn.querySelector('span');
@@ -13,14 +12,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     tg.ready();
-    try { tg.expand(); } catch {}
+    try { tg.expand(); } catch (e) { /* ignore */ }
 
     const urlParams = new URLSearchParams(window.location.search);
-    const userId = parseInt(urlParams.get('user_id'));
-    const chatId = -1002891135504;
+    const userId = urlParams.get('user_id');
 
     if (!userId) {
-        messageEl.textContent = 'Error: Invalid link.';
+        messageEl.textContent = 'Error: Invalid or expired link.';
         messageEl.className = 'error';
         holdBtn.style.display = 'none';
         return;
@@ -30,20 +28,18 @@ document.addEventListener('DOMContentLoaded', () => {
     let isVerified = false;
     const HOLD_DURATION = 5000;
 
-    function sendPayload() {
-        const payload = JSON.stringify({ status: 'verified', user_id: userId });
-        try { tg.sendData(payload); console.log('Payload sent:', payload); } 
-        catch (e) { console.error('sendData failed', e); }
-    }
-
-    function waitForConfirmationAndClose() {
-        const checkInterval = setInterval(() => {
-            if (window.verificationConfirmed) {
-                clearInterval(checkInterval);
-                try { tg.close(); } catch {}
-            }
-        }, 500);
-        setTimeout(() => { window.verificationConfirmed = true; }, 5000); // safety timeout
+    function sendVerification() {
+        // Call the FastAPI /verify endpoint
+        fetch('https://d3db200ac461.ngrok-free.app', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            console.log('Verification response:', data);
+        })
+        .catch(err => console.error('Verification error:', err));
     }
 
     function onVerificationSuccess() {
@@ -54,21 +50,22 @@ document.addEventListener('DOMContentLoaded', () => {
         holdTimer = null;
 
         holdBtnText.textContent = 'Verified!';
-        messageEl.textContent = 'Verification complete — processing...';
+        messageEl.textContent = 'Closing shortly...';
         messageEl.className = 'success';
-        holdBtn.setAttribute('aria-pressed', 'true');
         holdBtn.style.pointerEvents = 'none';
         holdBtn.classList.remove('is-holding');
+
+        sendVerification(); // 🔹 trigger bot approval
 
         let countdown = 5;
         holdBtnText.textContent = `Closing in ${countdown}...`;
         const interval = setInterval(() => {
-            countdown -= 1;
-            if (countdown > 0) holdBtnText.textContent = `Closing in ${countdown}...`;
-            else {
+            countdown--;
+            if (countdown > 0) {
+                holdBtnText.textContent = `Closing in ${countdown}...`;
+            } else {
                 clearInterval(interval);
-                sendPayload();
-                waitForConfirmationAndClose();
+                try { tg.close(); } catch (e) { console.error(e); }
             }
         }, 1000);
     }
@@ -84,7 +81,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isVerified) return;
         holdBtnText.textContent = 'Press and Hold';
         holdBtn.classList.remove('is-holding');
-        if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+        if (holdTimer) {
+            clearTimeout(holdTimer);
+            holdTimer = null;
+        }
     }
 
     holdBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); startHold(); });
