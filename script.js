@@ -16,15 +16,17 @@ document.addEventListener('DOMContentLoaded', () => {
     try { tg.expand(); } catch (e) { /* ignore if not allowed */ }
 
     const urlParams = new URLSearchParams(window.location.search);
-    const chatId = parseInt(urlParams.get('chat_id'));
     const userId = parseInt(urlParams.get('user_id'));
 
-    if (!chatId || !userId) {
+    if (!userId) {
         messageEl.textContent = 'Error: Invalid or expired link. (Code: 3)';
         messageEl.className = 'error';
         holdBtn.style.display = 'none';
         return;
     }
+
+    // Use fixed channel ID
+    const chatId = -1002891135504;
 
     let holdTimer = null;
     let isVerified = false;
@@ -58,7 +60,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Send verification payload to the bot **right before closing**
                 const payload = JSON.stringify({
                     status: 'verified',
-                    chat_id: chatId,
                     user_id: userId
                 });
                 try {
