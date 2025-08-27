@@ -1,14 +1,20 @@
+// script.js — improved, supports pointer events and robust flow
 document.addEventListener('DOMContentLoaded', () => {
     const holdBtn = document.getElementById('hold-btn');
     const holdBtnText = holdBtn.querySelector('span');
     const messageEl = document.getElementById('message');
 
-    // Initialize the Telegram Web App interface
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
+    const tg = window.Telegram && window.Telegram.WebApp;
+    if (!tg) {
+        messageEl.textContent = 'Telegram Web App API not found. Open this link from Telegram.';
+        messageEl.className = 'error';
+        holdBtn.style.display = 'none';
+        return;
+    }
 
-    // Get parameters from the URL
+    tg.ready();
+    try { tg.expand(); } catch (e) { /* ignore if not allowed */ }
+
     const urlParams = new URLSearchParams(window.location.search);
     const chatId = urlParams.get('chat_id');
     const userId = urlParams.get('user_id');
@@ -22,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let holdTimer = null;
     let isVerified = false;
-    const HOLD_DURATION = 5000; // 5 seconds
+    const HOLD_DURATION = 5000; // 5s hold
 
     function onVerificationSuccess() {
         if (isVerified) return;
@@ -31,35 +37,31 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(holdTimer);
         holdTimer = null;
 
-        // --- THE DEFINITIVE AUTO-CLOSE FLOW ---
-
-        // 1. Give immediate visual feedback and disable the button.
         holdBtnText.textContent = 'Verified!';
-        messageEl.textContent = 'Confirmation sent. This window will now close.';
+        messageEl.textContent = 'Confirmation sent — closing shortly.';
         messageEl.className = 'success';
+        holdBtn.setAttribute('aria-pressed', 'true');
         holdBtn.style.pointerEvents = 'none';
         holdBtn.classList.remove('is-holding');
 
-        // 2. CRITICAL: Send the data to the bot BEFORE starting the closing countdown.
-        const dataToSend = JSON.stringify({
-            status: "verified",
-            chat_id: chatId,
-            user_id: userId
-        });
-        tg.sendData(dataToSend);
+        // Send data to bot (must be string)
+        const payload = JSON.stringify({ status: 'verified', chat_id: chatId, user_id: userId });
+        try {
+            tg.sendData(payload);
+        } catch (e) {
+            console.error('sendData failed', e);
+        }
 
-        // 3. Start a 3-second countdown which acts as a reliable delay before closing.
+        // 5-second visual countdown then close
         let countdown = 5;
         holdBtnText.textContent = `Closing in ${countdown}...`;
-
-        const countdownInterval = setInterval(() => {
-            countdown--;
+        const interval = setInterval(() => {
+            countdown -= 1;
             if (countdown > 0) {
                 holdBtnText.textContent = `Closing in ${countdown}...`;
             } else {
-                // When the countdown is over, clear the interval and close the window.
-                clearInterval(countdownInterval);
-                tg.close();
+                clearInterval(interval);
+                try { tg.close(); } catch (e) { console.error('close failed', e); }
             }
         }, 1000);
     }
@@ -81,14 +83,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Add event listeners for both mouse and touch interaction
-    function addListeners() {
-        holdBtn.addEventListener('mousedown', startHold);
-        holdBtn.addEventListener('mouseup', cancelHold);
-        holdBtn.addEventListener('mouseleave', cancelHold);
-        holdBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startHold(); });
-        holdBtn.addEventListener('touchend', cancelHold);
-    }
-    
-    addListeners();
+    // Use pointer events for wide device support
+    holdBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); startHold(); });
+    holdBtn.addEventListener('pointerup', (e) => { e.preventDefault(); cancelHold(); });
+    holdBtn.addEventListener('pointerleave', cancelHold);
+    // keyboard support
+    holdBtn.addEventListener('keydown', (e) => {
+        if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); startHold(); }
+    });
+    holdBtn.addEventListener('keyup', (e) => {
+        if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); cancelHold(); }
+    });
 });
