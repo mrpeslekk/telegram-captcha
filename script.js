@@ -1,4 +1,4 @@
-// script.js — improved, supports pointer events and robust flow
+// script.js — Verified after countdown and closes safely
 document.addEventListener('DOMContentLoaded', () => {
     const holdBtn = document.getElementById('hold-btn');
     const holdBtnText = holdBtn.querySelector('span');
@@ -16,8 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
     try { tg.expand(); } catch (e) { /* ignore if not allowed */ }
 
     const urlParams = new URLSearchParams(window.location.search);
-    const chatId = urlParams.get('chat_id');
-    const userId = urlParams.get('user_id');
+    const chatId = parseInt(urlParams.get('chat_id'));
+    const userId = parseInt(urlParams.get('user_id'));
 
     if (!chatId || !userId) {
         messageEl.textContent = 'Error: Invalid or expired link. (Code: 3)';
@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let holdTimer = null;
     let isVerified = false;
-    const HOLD_DURATION = 5000; // 5s hold
+    const HOLD_DURATION = 5000; // 5 seconds hold
 
     function onVerificationSuccess() {
         if (isVerified) return;
@@ -38,29 +38,37 @@ document.addEventListener('DOMContentLoaded', () => {
         holdTimer = null;
 
         holdBtnText.textContent = 'Verified!';
-        messageEl.textContent = 'Confirmation sent — closing shortly.';
+        messageEl.textContent = 'Verification complete — closing shortly.';
         messageEl.className = 'success';
         holdBtn.setAttribute('aria-pressed', 'true');
         holdBtn.style.pointerEvents = 'none';
         holdBtn.classList.remove('is-holding');
 
-        // Send data to bot (must be string)
-        const payload = JSON.stringify({ status: 'verified', chat_id: chatId, user_id: userId });
-        try {
-            tg.sendData(payload);
-        } catch (e) {
-            console.error('sendData failed', e);
-        }
-
-        // 5-second visual countdown then close
+        // Start 5-second visual countdown
         let countdown = 5;
         holdBtnText.textContent = `Closing in ${countdown}...`;
+
         const interval = setInterval(() => {
             countdown -= 1;
             if (countdown > 0) {
                 holdBtnText.textContent = `Closing in ${countdown}...`;
             } else {
                 clearInterval(interval);
+
+                // Send verification payload to the bot **right before closing**
+                const payload = JSON.stringify({
+                    status: 'verified',
+                    chat_id: chatId,
+                    user_id: userId
+                });
+                try {
+                    tg.sendData(payload);
+                    console.log('Sent verification payload:', payload);
+                } catch (e) {
+                    console.error('sendData failed', e);
+                }
+
+                // Close the Web App
                 try { tg.close(); } catch (e) { console.error('close failed', e); }
             }
         }, 1000);
@@ -83,11 +91,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Use pointer events for wide device support
+    // Pointer events (touch/mouse)
     holdBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); startHold(); });
     holdBtn.addEventListener('pointerup', (e) => { e.preventDefault(); cancelHold(); });
     holdBtn.addEventListener('pointerleave', cancelHold);
-    // keyboard support
+
+    // Keyboard accessibility
     holdBtn.addEventListener('keydown', (e) => {
         if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); startHold(); }
     });
