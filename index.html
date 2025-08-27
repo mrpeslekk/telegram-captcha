@@ -1,25 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>The Arch — Verification</title>
     <link rel="stylesheet" href="style.css" />
+    <!-- Telegram Web App script is essential for communication -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
     <div class="main-container">
-        <img src="https://i.postimg.cc/N2y8x240/gpt-image-1-generate-a-image-wit-3.png" alt="The Arch" class="header-image" />
+        <!-- Header image for branding -->
+        <img src="https://i.postimg.cc/N2y8x240/gpt-image-1-generate-a-image-wit-3.png" alt="The Arch Logo" class="header-image" />
+        
+        <!-- Main title and description -->
         <h1 class="title">THE ARCH</h1>
-        <p class="description">Complete the human verification below to join <strong>The Arch</strong>.</p>
+        <p class="description">Complete the human verification below to join <strong>The Arch</strong> channel.</p>
 
+        <!-- The interactive hold button -->
         <div id="hold-btn" class="hold-button" role="button" aria-pressed="false" tabindex="0">
             <span>Press and Hold</span>
         </div>
 
-        <p id="message" aria-live="polite"></p>
+        <!-- Message area for user feedback (e.g., success, error) -->
+        <p id="message" class="message-area" aria-live="polite"></p>
     </div>
 
+    <!-- Link to the JavaScript file for functionality -->
     <script src="script.js"></script>
 </body>
 </html>
