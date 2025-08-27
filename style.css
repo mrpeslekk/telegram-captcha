@@ -1,110 +1,26 @@
-/* Import the required fonts from Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Zen+Dots&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
 
-:root {
-    --background-color: #0F0C0C;
-    --button-bg: #000000;
-    --fill-color: rgba(34, 34, 34, 0.6); /* #222222 with 60% transparency */
-    --text-color: #ffffff;
+:root{
+  --background-color:#0F0C0C;
+  --button-bg:#000000;
+  --fill-color:rgba(34,34,34,0.6);
+  --text-color:#ffffff;
 }
 
-html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-}
+html,body{height:100%;margin:0;padding:0;}
+body{font-family:'Roboto',sans-serif;background:var(--background-color);color:var(--text-color);display:flex;justify-content:center;align-items:flex-start;padding-top:10vh;text-align:center}
 
-body {
-    font-family: 'Roboto', sans-serif;
-    background-color: var(--background-color);
-    color: var(--text-color);
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding-top: 10vh;
-    text-align: center;
-}
+.main-container{max-width:380px;width:90%;display:flex;flex-direction:column;align-items:center;gap:20px}
+.header-image{width:240px;height:auto;margin-bottom:6px}
+.title{font-family:'Zen Dots',sans-serif;font-size:2.2rem;margin:0}
+.description{max-width:320px;font-size:0.95rem;line-height:1.4;opacity:0.9}
+.hold-button{font-family:'Zen Dots',sans-serif;background:var(--button-bg);color:var(--text-color);border:1px solid #222;border-radius:999px;padding:18px 34px;font-size:1.05rem;cursor:pointer;position:relative;overflow:hidden;user-select:none;margin-top:10px;width:80%;z-index:1;display:flex;align-items:center;justify-content:center}
+.hold-button span{position:relative;z-index:2}
+.hold-button::before{content:'';position:absolute;bottom:0;left:0;width:100%;height:0;background:var(--fill-color);transition:height 5s linear;z-index:1}
+.hold-button.is-holding::before{height:100%}
+#message{margin-top:8px;font-weight:500;height:22px}
+.success{color:#28a745}
+.error{color:#dc3545}
 
-.main-container {
-    max-width: 380px;
-    width: 90%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 25px;
-}
-
-.header-image {
-    width: 250px; 
-    height: auto;
-    margin-bottom: 10px;
-}
-
-.title {
-    font-family: 'Zen Dots', sans-serif;
-    font-size: 2.5em;
-    letter-spacing: 2px;
-    margin: 0;
-}
-
-.description {
-    max-width: 300px;
-    font-size: 0.9em;
-    line-height: 1.4;
-    opacity: 0.8;
-}
-
-.description strong {
-    font-family: 'Zen Dots', sans-serif;
-}
-
-.hold-button {
-    font-family: 'Zen Dots', sans-serif;
-    background-color: var(--button-bg);
-    color: var(--text-color);
-    border: 1px solid #222222;
-    border-radius: 999px;
-    padding: 20px 40px;
-    font-size: 1.2em;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    -webkit-user-select: none;
-    user-select: none;
-    margin-top: 20px;
-    margin-bottom: 20px;
-    width: 80%;
-    z-index: 1;
-}
-
-.hold-button span {
-    position: relative;
-    z-index: 2; /* Keep text above the fill */
-}
-
-.hold-button::before {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 0; /* Starts at 0 height */
-    background-color: var(--fill-color);
-    transition: height 5s linear; 
-    z-index: 1;
-}
-
-.hold-button.is-holding::before {
-    height: 100%; /* Animate to full height */
-}
-
-#message {
-    margin-top: 10px;
-    font-weight: 500;
-    height: 20px;
-}
-
-.success { color: #28a745; }
-.error { color: #dc3545; }
+@media (max-width:420px){.title{font-size:1.8rem}.hold-button{padding:14px 26px}}
