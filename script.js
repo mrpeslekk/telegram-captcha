@@ -1,4 +1,4 @@
-// script.js — Verified after countdown and closes safely
+// script.js — Verified after countdown with handshake
 document.addEventListener('DOMContentLoaded', () => {
     const holdBtn = document.getElementById('hold-btn');
     const holdBtnText = holdBtn.querySelector('span');
@@ -13,24 +13,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     tg.ready();
-    try { tg.expand(); } catch (e) { /* ignore if not allowed */ }
+    try { tg.expand(); } catch {}
 
     const urlParams = new URLSearchParams(window.location.search);
     const userId = parseInt(urlParams.get('user_id'));
+    const chatId = -1002891135504;
 
     if (!userId) {
-        messageEl.textContent = 'Error: Invalid or expired link. (Code: 3)';
+        messageEl.textContent = 'Error: Invalid link.';
         messageEl.className = 'error';
         holdBtn.style.display = 'none';
         return;
     }
 
-    // Use fixed channel ID
-    const chatId = -1002891135504;
-
     let holdTimer = null;
     let isVerified = false;
-    const HOLD_DURATION = 5000; // 5 seconds hold
+    const HOLD_DURATION = 5000;
+
+    function sendPayload() {
+        const payload = JSON.stringify({ status: 'verified', user_id: userId });
+        try { tg.sendData(payload); console.log('Payload sent:', payload); } 
+        catch (e) { console.error('sendData failed', e); }
+    }
+
+    function waitForConfirmationAndClose() {
+        const checkInterval = setInterval(() => {
+            if (window.verificationConfirmed) {
+                clearInterval(checkInterval);
+                try { tg.close(); } catch {}
+            }
+        }, 500);
+        setTimeout(() => { window.verificationConfirmed = true; }, 5000); // safety timeout
+    }
 
     function onVerificationSuccess() {
         if (isVerified) return;
@@ -40,37 +54,21 @@ document.addEventListener('DOMContentLoaded', () => {
         holdTimer = null;
 
         holdBtnText.textContent = 'Verified!';
-        messageEl.textContent = 'Verification complete — closing shortly.';
+        messageEl.textContent = 'Verification complete — processing...';
         messageEl.className = 'success';
         holdBtn.setAttribute('aria-pressed', 'true');
         holdBtn.style.pointerEvents = 'none';
         holdBtn.classList.remove('is-holding');
 
-        // Start 5-second visual countdown
         let countdown = 5;
         holdBtnText.textContent = `Closing in ${countdown}...`;
-
         const interval = setInterval(() => {
             countdown -= 1;
-            if (countdown > 0) {
-                holdBtnText.textContent = `Closing in ${countdown}...`;
-            } else {
+            if (countdown > 0) holdBtnText.textContent = `Closing in ${countdown}...`;
+            else {
                 clearInterval(interval);
-
-                // Send verification payload to the bot **right before closing**
-                const payload = JSON.stringify({
-                    status: 'verified',
-                    user_id: userId
-                });
-                try {
-                    tg.sendData(payload);
-                    console.log('Sent verification payload:', payload);
-                } catch (e) {
-                    console.error('sendData failed', e);
-                }
-
-                // Close the Web App
-                try { tg.close(); } catch (e) { console.error('close failed', e); }
+                sendPayload();
+                waitForConfirmationAndClose();
             }
         }, 1000);
     }
@@ -86,18 +84,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isVerified) return;
         holdBtnText.textContent = 'Press and Hold';
         holdBtn.classList.remove('is-holding');
-        if (holdTimer) {
-            clearTimeout(holdTimer);
-            holdTimer = null;
-        }
+        if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
     }
 
-    // Pointer events (touch/mouse)
     holdBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); startHold(); });
     holdBtn.addEventListener('pointerup', (e) => { e.preventDefault(); cancelHold(); });
     holdBtn.addEventListener('pointerleave', cancelHold);
 
-    // Keyboard accessibility
     holdBtn.addEventListener('keydown', (e) => {
         if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); startHold(); }
     });
